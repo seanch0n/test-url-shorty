@@ -1,0 +1,32 @@
+{
+  "direction": "LR",
+  "nodes": [
+    { "id": "req", "label": "POST /api/links", "shape": "terminal", "kind": "new",
+      "refs": [{ "path": "shorty/app.py", "symbol": "create_link" }] },
+    { "id": "json", "label": "body is JSON object?", "shape": "decision", "kind": "new",
+      "refs": [{ "path": "shorty/app.py", "symbol": "create_link" }] },
+    { "id": "url", "label": "validate url", "kind": "new",
+      "note": "http/https only, needs a host, no whitespace, max 2048 chars.",
+      "refs": [{ "path": "shorty/validation.py", "symbol": "validate_destination_url" }] },
+    { "id": "exp", "label": "parse expiry", "kind": "new",
+      "note": "Optional ISO 8601 with a required timezone.",
+      "refs": [{ "path": "shorty/validation.py", "symbol": "parse_expires_at" }] },
+    { "id": "shorten", "label": "pick code and save", "shape": "process",
+      "refs": [{ "path": "shorty/codes.py", "symbol": "shorten" }, { "path": "shorty/app.py", "symbol": "get_repo" }] },
+    { "id": "ok", "label": "201 with short_url", "shape": "terminal", "kind": "new",
+      "refs": [{ "path": "shorty/app.py", "symbol": "link_to_json" }, { "path": "shorty/app.py", "symbol": "short_url_for" }] },
+    { "id": "err", "label": "error envelope", "shape": "terminal", "kind": "new",
+      "note": "400 / 409 / 503 with a stable error code.",
+      "refs": [{ "path": "shorty/app.py", "symbol": "error_response" }] }
+  ],
+  "edges": [
+    { "from": "req", "to": "json" },
+    { "from": "json", "to": "url", "label": "yes" },
+    { "from": "json", "to": "err", "label": "no", "style": "dashed" },
+    { "from": "url", "to": "exp" },
+    { "from": "url", "to": "err", "label": "invalid", "style": "dashed" },
+    { "from": "exp", "to": "shorten" },
+    { "from": "shorten", "to": "ok" },
+    { "from": "shorten", "to": "err", "label": "alias bad or taken", "style": "dashed" }
+  ]
+}
