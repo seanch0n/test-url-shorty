@@ -1,0 +1,30 @@
+{
+  "direction": "LR",
+  "nodes": [
+    { "id": "cfg", "label": "load config", "shape": "terminal", "kind": "new",
+      "refs": [{ "path": "shorty/config.py", "symbol": "from_env" }] },
+    { "id": "conn", "label": "open connection", "kind": "new",
+      "refs": [{ "path": "shorty/db.py", "symbol": "connect" }] },
+    { "id": "mig", "label": "apply pending migrations", "kind": "new",
+      "note": "Each .sql file runs in its own transaction and is recorded in schema_migrations.",
+      "refs": [{ "path": "shorty/db.py", "symbol": "migrate" }, { "path": "shorty/migrations/0001_create_links.sql", "line": 1 }] },
+    { "id": "create", "label": "create link", "kind": "new",
+      "refs": [{ "path": "shorty/repository.py", "symbol": "create" }] },
+    { "id": "dup", "label": "code taken?", "shape": "decision", "kind": "new",
+      "note": "Unique index violation becomes DuplicateShortCodeError.",
+      "refs": [{ "path": "shorty/repository.py", "symbol": "DuplicateShortCodeError" }] },
+    { "id": "get", "label": "look up by code", "kind": "new",
+      "refs": [{ "path": "shorty/repository.py", "symbol": "get_by_code" }] },
+    { "id": "usable", "label": "usable check", "shape": "terminal", "kind": "new",
+      "note": "Not disabled and not past expires_at.",
+      "refs": [{ "path": "shorty/repository.py", "symbol": "is_usable" }, { "path": "shorty/repository.py", "symbol": "list_unusable" }] }
+  ],
+  "edges": [
+    { "from": "cfg", "to": "conn" },
+    { "from": "conn", "to": "mig" },
+    { "from": "mig", "to": "create" },
+    { "from": "create", "to": "dup" },
+    { "from": "dup", "to": "get", "label": "no" },
+    { "from": "get", "to": "usable" }
+  ]
+}
