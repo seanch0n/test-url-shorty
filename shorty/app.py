@@ -3,10 +3,12 @@
 import os
 from datetime import datetime, timezone
 
-from flask import Flask, current_app, g, jsonify, request
+from flask import Flask, Response, current_app, g, jsonify, request
 from werkzeug.exceptions import HTTPException
+from werkzeug.urls import iri_to_uri
 
 from shorty.codes import (
+    ALIAS_PATTERN,
     AliasTakenError,
     CodeGenerationError,
     InvalidAliasError,
@@ -90,5 +92,26 @@ def create_app(database: DatabaseConfig | None = None, base_url: str | None = No
         except CodeGenerationError:
             return error_response(503, "code_generation_failed", "could not allocate a short code, try again")
         return jsonify({"data": link_to_json(link)}), 201
+
+    @app.get("/<short_code>")
+    def follow_link(short_code: str):
+        # Anything that could never have been stored (favicon.ico, typos with
+        # dots or slashes) is rejected without opening a database connection.
+        if not ALIAS_PATTERN.fullmatch(short_code):
+            return error_response(404, "not_found", "short link not found")
+        link = get_repo().get_by_code(short_code)
+        if link is None:
+            return error_response(404, "not_found", "short link not found")
+        if link.disabled:
+            return error_response(410, "link_disabled", "this short link has been disabled")
+        if link.is_expired():
+            return error_response(410, "link_expired", "this short link has expired")
+        resp = Response(status=302)
+        # Percent-encode any non-ASCII characters while keeping existing escapes,
+        # so the destination's path, query and fragment arrive unchanged.
+        resp.headers["Location"] = iri_to_uri(link.target_url)
+        # Not cacheable: disabling or expiring a link must take effect at once.
+        resp.headers["Cache-Control"] = "no-store"
+        return resp
 
     return app
