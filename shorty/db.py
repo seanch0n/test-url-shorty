@@ -10,6 +10,8 @@ def connect(config: DatabaseConfig) -> sqlite3.Connection:
     conn = sqlite3.connect(config.path, timeout=config.timeout)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    # WAL lets readers (redirects) proceed while a write is in progress.
+    conn.execute("PRAGMA journal_mode = WAL")
     return conn
 
 

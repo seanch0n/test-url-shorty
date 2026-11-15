@@ -96,9 +96,13 @@ def test_naive_datetime_rejected(repo):
         repo.create("naive01", "https://a.example", expires_at=datetime(2030, 1, 1))
 
 
+def test_connection_uses_wal(conn):
+    assert conn.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
+
+
 def test_config_from_env():
     cfg = DatabaseConfig.from_env(
         {"SHORTY_DATABASE_PATH": "/tmp/x.db", "SHORTY_DATABASE_TIMEOUT": "2.5"}
     )
     assert cfg == DatabaseConfig(path="/tmp/x.db", timeout=2.5)
-    assert DatabaseConfig.from_env({}).path == "shorty.db"
+    assert DatabaseConfig.from_env({}) == DatabaseConfig(path="shorty.db", timeout=2.0)
