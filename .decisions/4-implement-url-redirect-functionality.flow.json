@@ -1,0 +1,31 @@
+{
+  "direction": "LR",
+  "nodes": [
+    { "id": "req", "label": "GET /short_code", "shape": "terminal", "kind": "new",
+      "refs": [{ "path": "shorty/app.py", "symbol": "follow_link" }] },
+    { "id": "shape", "label": "could be a code?", "shape": "decision", "kind": "new",
+      "note": "Regex check; no database connection for favicon.ico and the like.",
+      "refs": [{ "path": "shorty/app.py", "line": 100 }] },
+    { "id": "lookup", "label": "look up code", "kind": "new",
+      "note": "One SELECT on the unique index, no writes.",
+      "refs": [{ "path": "shorty/repository.py", "symbol": "get_by_code" }, { "path": "shorty/app.py", "line": 102 }] },
+    { "id": "usable", "label": "disabled or expired?", "shape": "decision", "kind": "new",
+      "refs": [{ "path": "shorty/app.py", "line": 105 }, { "path": "shorty/repository.py", "symbol": "is_expired" }] },
+    { "id": "redirect", "label": "302 to destination", "shape": "terminal", "kind": "new",
+      "note": "Location is the stored URL with only non-ASCII encoded; no-store.",
+      "refs": [{ "path": "shorty/app.py", "line": 112 }] },
+    { "id": "notfound", "label": "404 not_found", "shape": "terminal", "kind": "new",
+      "refs": [{ "path": "shorty/app.py", "line": 104 }] },
+    { "id": "gone", "label": "410 disabled or expired", "shape": "terminal", "kind": "new",
+      "refs": [{ "path": "shorty/app.py", "line": 106 }] }
+  ],
+  "edges": [
+    { "from": "req", "to": "shape" },
+    { "from": "shape", "to": "lookup", "label": "yes" },
+    { "from": "shape", "to": "notfound", "label": "no", "style": "dashed" },
+    { "from": "lookup", "to": "usable", "label": "found" },
+    { "from": "lookup", "to": "notfound", "label": "missing", "style": "dashed" },
+    { "from": "usable", "to": "redirect", "label": "no" },
+    { "from": "usable", "to": "gone", "label": "yes", "style": "dashed" }
+  ]
+}
