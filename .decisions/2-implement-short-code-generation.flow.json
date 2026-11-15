@@ -1,0 +1,36 @@
+{
+  "direction": "LR",
+  "nodes": [
+    { "id": "start", "label": "shorten", "shape": "terminal", "kind": "new",
+      "refs": [{ "path": "shorty/codes.py", "symbol": "shorten" }] },
+    { "id": "hasalias", "label": "alias given?", "shape": "decision", "kind": "new",
+      "refs": [{ "path": "shorty/codes.py", "symbol": "shorten" }] },
+    { "id": "validate", "label": "validate alias", "kind": "new",
+      "note": "3-32 chars of [A-Za-z0-9_-], reserved names blocked.",
+      "refs": [{ "path": "shorty/codes.py", "symbol": "validate_alias" }] },
+    { "id": "savealias", "label": "save alias", "kind": "new",
+      "note": "A taken alias raises AliasTakenError, no retry.",
+      "refs": [{ "path": "shorty/codes.py", "symbol": "_create_with_alias" }] },
+    { "id": "gen", "label": "generate code", "kind": "new",
+      "note": "7 random Base62 characters from secrets.",
+      "refs": [{ "path": "shorty/codes.py", "symbol": "generate_code" }] },
+    { "id": "taken", "label": "code taken?", "shape": "decision", "kind": "new",
+      "note": "Pre-check, then the unique index catches races.",
+      "refs": [{ "path": "shorty/codes.py", "symbol": "_create_with_generated_code" }] },
+    { "id": "giveup", "label": "give up after 5", "shape": "terminal", "kind": "new",
+      "refs": [{ "path": "shorty/codes.py", "symbol": "CodeGenerationError" }] },
+    { "id": "done", "label": "link saved", "shape": "terminal",
+      "refs": [{ "path": "shorty/repository.py", "symbol": "create" }] }
+  ],
+  "edges": [
+    { "from": "start", "to": "hasalias" },
+    { "from": "hasalias", "to": "validate", "label": "yes" },
+    { "from": "validate", "to": "savealias" },
+    { "from": "savealias", "to": "done" },
+    { "from": "hasalias", "to": "gen", "label": "no" },
+    { "from": "gen", "to": "taken" },
+    { "from": "taken", "to": "gen", "label": "yes, retry" },
+    { "from": "taken", "to": "done", "label": "no" },
+    { "from": "taken", "to": "giveup", "label": "attempts used up", "style": "dashed" }
+  ]
+}
