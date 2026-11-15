@@ -23,4 +23,4 @@ Each decision below is also an inline comment on the code it affected. Reply on 
 
 ## Testing
 
-`python -m pytest -q`: 11 passed (Python 3.12, SQLite via stdlib). Not tested against concurrent writers.
+`python -m pytest -q`: 12 passed (Python 3.12, SQLite via stdlib, WAL mode). Not tested against concurrent writers.
